@@ -8,9 +8,16 @@ data class ItemEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 
-    val registroId: Int,   // FK para o registro pai
+    val registroId: Int,
+
+    // NOVO: código do produto (pode ser nulo)
+    val codigo: String? = null,
+
     val nome: String,
     val quantidade: Int,
     val tipo: String,
-    val validade: String? = null
+    val validade: String? = null,
+
+    // NOVO: observação
+    val observacao: String? = null
 )

@@ -14,7 +14,9 @@ object DatabaseProvider {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "supmanaira.db"
-            ).build()
+            )
+                .fallbackToDestructiveMigration() // ← ESSA LINHA ELIMINA O CRASH
+                .build()
 
             db = instance
             instance
