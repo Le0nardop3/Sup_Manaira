@@ -14,7 +14,7 @@ data class ItemEntity(
     val codigo: String? = null,
 
     val nome: String,
-    val quantidade: Int,
+    val quantidade: String,
     val tipo: String,
     val validade: String? = null,
 

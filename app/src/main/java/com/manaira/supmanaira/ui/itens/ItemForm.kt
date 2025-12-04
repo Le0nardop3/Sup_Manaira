@@ -1,65 +1,103 @@
 package com.manaira.supmanaira.ui.itens
 
 import android.app.DatePickerDialog
-import android.content.Context
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
+import android.util.Log
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import com.manaira.supmanaira.navigation.AppRoute
+import kotlinx.coroutines.delay
 import java.util.Calendar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DialogCriarItem(
-    context: Context,
+fun ItemForm(
+    navController: NavHostController,
+    registroId: Int,
     onCancelar: () -> Unit,
-    onSalvar: (codigo: String, nome: String, quantidade: Int, tipo: String, validade: String?, obs: String?) -> Unit,
+    onSalvar: (codigo: String, descricao: String, quantidade: String, validade: String?, obs: String?) -> Unit,
     buscarDescricao: suspend (String) -> String?
 ) {
+    val context = LocalContext.current
+
     var codigo by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
     var quantidade by remember { mutableStateOf("") }
-    var tipo by remember { mutableStateOf("") }
     var validade by remember { mutableStateOf("") }
     var observacao by remember { mutableStateOf("") }
 
-    val tipos = listOf("UNIDADE", "CAIXA", "FARDO", "PACOTE", "PALLET", "OUTRO")
+    // ---------------------------------------------------------
+    // ⭐ ESCUTA O MESMO HANDLE DA ItensScreen → FUNCIONA!
+    // ---------------------------------------------------------
+    val scannedFlow = navController
+        .currentBackStackEntry
+        ?.savedStateHandle
+        ?.getStateFlow<String?>("scanned_code", null)
+
+    LaunchedEffect(scannedFlow) {
+        scannedFlow?.collect { code ->
+            Log.d("DEBUG_FORM", "ItemForm recebeu scanned_code = $code")
+
+            if (!code.isNullOrBlank()) {
+                codigo = code
+            }
+        }
+    }
+
+    // ---------------------------------------------------------
+    // DESCRIÇÃO AUTOMÁTICA
+    // ---------------------------------------------------------
+    LaunchedEffect(codigo) {
+        if (codigo.length >= 5) {
+            delay(120)
+            val desc = buscarDescricao(codigo)
+            if (!desc.isNullOrBlank()) descricao = desc
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onCancelar,
         title = { Text("Adicionar Item") },
-        text = {
 
+        text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
 
-                // ---- CÓDIGO + BOTÃO SCANNER ----
                 OutlinedTextField(
                     value = codigo,
                     onValueChange = { codigo = it },
-                    label = { Text("Código do Produto") },
+                    label = { Text("Código (via scanner)") },
                     trailingIcon = {
                         IconButton(onClick = {
-                            // ABRIR CÂMERA PARA LER CÓDIGO (IMPLEMENTAREMOS DEPOIS)
+
+                            // limpa antes de abrir o scanner
+                            navController.currentBackStackEntry
+                                ?.savedStateHandle
+                                ?.set("scanned_code", null)
+
+                            navController.navigate(
+                                AppRoute.Scanner.createRoute(registroId)
+                            )
                         }) {
                             Icon(Icons.Filled.CameraAlt, contentDescription = "Scanner")
-
                         }
                     },
                     modifier = Modifier.fillMaxWidth()
                 )
-
-                // AUTO PREENCHIMENTO DA DESCRIÇÃO
-                LaunchedEffect(codigo) {
-                    if (codigo.length >= 5) {
-                        val desc = buscarDescricao(codigo)
-                        if (desc != null) descricao = desc
-                    }
-                }
 
                 OutlinedTextField(
                     value = descricao,
@@ -68,77 +106,37 @@ fun DialogCriarItem(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // ---- QUANTIDADE ----
                 OutlinedTextField(
                     value = quantidade,
                     onValueChange = { quantidade = it },
                     label = { Text("Quantidade") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // ---- DROPDOWN DE TIPOS ----
-                var expanded by remember { mutableStateOf(false) }
-
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = it }
-                ) {
-                    OutlinedTextField(
-                        value = tipo,
-                        onValueChange = {},
-                        readOnly = true,
-                        label = { Text("Tipo") },
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded)
-                        },
-                        modifier = Modifier
-                            .menuAnchor()
-                            .fillMaxWidth()
-                    )
-
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        tipos.forEach {
-                            DropdownMenuItem(
-                                text = { Text(it) },
-                                onClick = {
-                                    tipo = it
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                // ---- VALIDADE (DATE PICKER) ----
                 OutlinedTextField(
                     value = validade,
                     onValueChange = {},
+                    readOnly = true,
                     label = { Text("Validade") },
                     trailingIcon = {
                         IconButton(onClick = {
-                            val calendar = Calendar.getInstance()
+                            val cal = Calendar.getInstance()
                             DatePickerDialog(
                                 context,
-                                { _, year, month, day ->
-                                    validade = "%02d/%02d/%04d".format(day, month + 1, year)
+                                { _, y, m, d ->
+                                    validade = "%02d/%02d/%04d".format(d, m + 1, y)
                                 },
-                                calendar.get(Calendar.YEAR),
-                                calendar.get(Calendar.MONTH),
-                                calendar.get(Calendar.DAY_OF_MONTH)
+                                cal.get(Calendar.YEAR),
+                                cal.get(Calendar.MONTH),
+                                cal.get(Calendar.DAY_OF_MONTH)
                             ).show()
                         }) {
-                            Icon(Icons.Filled.DateRange, contentDescription = "Selecionar validade")
+                            Icon(Icons.Filled.CalendarToday, "Selecionar data")
                         }
                     },
-                    readOnly = true,
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                // ---- OBSERVAÇÃO ----
                 OutlinedTextField(
                     value = observacao,
                     onValueChange = { observacao = it },
@@ -147,22 +145,22 @@ fun DialogCriarItem(
                 )
             }
         },
+
         confirmButton = {
             TextButton(onClick = {
-                if (codigo.isNotBlank() && quantidade.isNotBlank() && tipo.isNotBlank()) {
-                    onSalvar(
-                        codigo,
-                        descricao,
-                        quantidade.toInt(),
-                        tipo,
-                        validade.ifBlank { null },
-                        observacao.ifBlank { null }
-                    )
-                }
+                onSalvar(
+                    codigo,
+                    descricao,
+                    quantidade, // agora String
+                    validade.ifBlank { null },
+                    observacao.ifBlank { null }
+                )
+
             }) {
                 Text("Salvar")
             }
         },
+
         dismissButton = {
             TextButton(onClick = onCancelar) {
                 Text("Cancelar")

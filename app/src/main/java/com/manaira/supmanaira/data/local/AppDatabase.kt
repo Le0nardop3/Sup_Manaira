@@ -15,7 +15,7 @@ import com.manaira.supmanaira.data.local.entities.ProdutoEntity
         ItemEntity::class,
         ProdutoEntity::class
     ],
-    version = 3, // MUDEI AQUI — tem que aumentar SEMPRE!
+    version = 4, // MUDEI AQUI — tem que aumentar SEMPRE!
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

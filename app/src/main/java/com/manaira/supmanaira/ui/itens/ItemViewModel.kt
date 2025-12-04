@@ -23,10 +23,11 @@ class ItemViewModel(
     val itens = repository.getItens(registroId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    // Agora quantidade é String
     fun criarItem(
         codigo: String?,
         nome: String,
-        quantidade: Int,
+        quantidade: String,   // <-- ALTERADO AQUI
         tipo: String,
         validade: String?,
         observacao: String?
@@ -37,7 +38,7 @@ class ItemViewModel(
                     registroId = registroId,
                     codigo = codigo,
                     nome = nome,
-                    quantidade = quantidade,
+                    quantidade = quantidade,   // <-- STRING
                     tipo = tipo,
                     validade = validade,
                     observacao = observacao
@@ -58,7 +59,6 @@ class ItemViewModel(
         }
     }
 
-    // usado pelo diálogo pra buscar descrição na tabela produtos
     suspend fun buscarDescricaoPorCodigo(codigo: String): String? {
         return produtoRepository.buscarPorCodigo(codigo)?.descricao
     }
