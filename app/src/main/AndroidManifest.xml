@@ -2,9 +2,20 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- PERMISSÃO E FEATURE DE CÂMERA -->
+    <!-- Permissões necessárias -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- Acesso ao diretório Downloads NO ANDROID 10+ não requer permissão extra -->
+    <!-- Mas habilitamos compatibilidade com versões antigas -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+
+    <!-- Scanner usa câmera, mas não exige exclusividade do hardware -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -16,6 +27,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.SupManaira">
 
+        <!-- ACTIVIDADE PRINCIPAL -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -28,6 +40,17 @@
             </intent-filter>
 
         </activity>
+
+        <!-- FILE PROVIDER PARA EXPORTAÇÃO DE ARQUIVOS -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
 
     </application>
 

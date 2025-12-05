@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -22,10 +23,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.manaira.supmanaira.data.local.entities.ItemEntity
 import com.manaira.supmanaira.navigation.AppRoute
+import com.manaira.supmanaira.utils.ExportUtils
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import java.util.Calendar
-
 
 /* ================================================================
    TELA PRINCIPAL DOS ITENS
@@ -47,9 +48,12 @@ fun ItensScreen(
     var abrirFormCriar by remember { mutableStateOf(false) }
     var itemParaEditar by remember { mutableStateOf<ItemEntity?>(null) }
 
-    /* ---------------------------------------------------------
-       LISTENER DO SCANNER – CRIAR ITEM
-       --------------------------------------------------------- */
+    // ⚠️ TÍTULO DO RELATÓRIO
+    var tituloPlanilha by remember { mutableStateOf("") }
+
+    /* -----------------------------------------
+       LISTENER — SCANNER (CRIAR)
+       ----------------------------------------- */
     val scannedCreateFlow: StateFlow<String?>? =
         navController.currentBackStackEntry
             ?.savedStateHandle
@@ -57,17 +61,13 @@ fun ItensScreen(
 
     LaunchedEffect(scannedCreateFlow) {
         scannedCreateFlow?.collectLatest { code ->
-            Log.d("DEBUG_ITENS", "CreateFlow recebeu = $code")
-
-            if (!code.isNullOrBlank()) {
-                abrirFormCriar = true
-            }
+            if (!code.isNullOrBlank()) abrirFormCriar = true
         }
     }
 
-    /* ---------------------------------------------------------
-       LISTENER DO SCANNER – EDITAR ITEM
-       --------------------------------------------------------- */
+    /* -----------------------------------------
+       LISTENER — SCANNER (EDITAR)
+       ----------------------------------------- */
     val scannedEditFlow: StateFlow<String?>? =
         navController.currentBackStackEntry
             ?.savedStateHandle
@@ -75,14 +75,11 @@ fun ItensScreen(
 
     LaunchedEffect(scannedEditFlow) {
         scannedEditFlow?.collectLatest { code ->
-            Log.d("DEBUG_ITENS", "EditFlow recebeu = $code")
-
             if (!code.isNullOrBlank() && itemParaEditar != null) {
                 itemParaEditar = itemParaEditar!!.copy(codigo = code)
             }
         }
     }
-
 
     Scaffold(
         floatingActionButton = {
@@ -97,6 +94,46 @@ fun ItensScreen(
                 .padding(padding)
                 .padding(16.dp)
         ) {
+
+            /* CAMPO — TÍTULO DA PLANILHA */
+            OutlinedTextField(
+                value = tituloPlanilha,
+                onValueChange = { tituloPlanilha = it },
+                label = { Text("Título da Planilha (opcional)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(10.dp))
+
+            /* BOTÃO — EXPORTAR */
+            Button(
+                onClick = {
+
+                    val nomeArquivo = "Registro_${registroId}"
+
+                    val uri = ExportUtils.exportarExcel(
+                        context = context,
+                        titulo = tituloPlanilha.ifBlank { "Registro $registroId" },
+                        nomeArquivo = nomeArquivo,
+                        itens = itens.value
+                    )
+
+                    if (uri != null) {
+                        ExportUtils.compartilharArquivo(context, uri)
+                    }
+
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Upload, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Exportar XLSX")
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            /* ----------------------------------------------- */
+
             Text("Itens do Registro", style = MaterialTheme.typography.headlineMedium)
 
             Spacer(Modifier.height(16.dp))
@@ -106,8 +143,9 @@ fun ItensScreen(
                     Card(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp)) {
 
-                            if (!item.codigo.isNullOrBlank())
-                                Text("Código: ${item.codigo}")
+                            item.codigo?.takeIf { it.isNotBlank() }?.let { codigo ->
+                                Text("Código: $codigo")
+                            }
 
                             Text(item.nome, style = MaterialTheme.typography.titleMedium)
                             Text("Quantidade: ${item.quantidade}")
@@ -155,7 +193,7 @@ fun ItensScreen(
                 viewModel.criarItem(
                     codigo = codigo,
                     nome = descricao,
-                    quantidade = quantidade, // STRING
+                    quantidade = quantidade,
                     tipo = "",
                     validade = validade,
                     observacao = obs
@@ -205,7 +243,6 @@ fun ItensScreen(
 }
 
 
-
 /* ================================================================
    DIALOG DE EDIÇÃO — COM SCANNER SEPARADO
    ================================================================ */
@@ -227,14 +264,14 @@ fun DialogEditarItem(
     var validade by remember { mutableStateOf(itemAtual.validade ?: "") }
     var observacao by remember { mutableStateOf(itemAtual.observacao ?: "") }
 
-    /* LISTENER EXCLUSIVO DO EDITAR */
+    /* LISTENER — EDITAR */
     LaunchedEffect(Unit) {
         navController.currentBackStackEntry
             ?.savedStateHandle
             ?.getStateFlow("edit_scanned_code", null)
             ?.collect { code ->
-                if (!code.isNullOrBlank()) {
-                    codigo = code
+                code?.takeIf { it.isNotBlank() }?.let { valor ->
+                    codigo = valor
                 }
             }
     }
