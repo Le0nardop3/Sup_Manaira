@@ -1,10 +1,9 @@
 package com.manaira.supmanaira.ui.itens
 
 import android.app.DatePickerDialog
-import android.util.Log
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CameraAlt
@@ -30,7 +29,13 @@ fun ItemForm(
     navController: NavHostController,
     registroId: Int,
     onCancelar: () -> Unit,
-    onSalvar: (codigo: String, descricao: String, quantidade: String, validade: String?, obs: String?) -> Unit,
+    onSalvar: (
+        codigo: String,
+        descricao: String,
+        quantidade: String,
+        validade: String?,
+        obs: String?
+    ) -> Unit,
     buscarDescricao: suspend (String) -> String?
 ) {
     val context = LocalContext.current
@@ -41,9 +46,9 @@ fun ItemForm(
     var validade by remember { mutableStateOf("") }
     var observacao by remember { mutableStateOf("") }
 
-    // ---------------------------------------------------------
-    // ⭐ ESCUTA O MESMO HANDLE DA ItensScreen → FUNCIONA!
-    // ---------------------------------------------------------
+    /* ---------------------------------------------------------
+       LISTENER — SCANNER (EVENTO DE UMA VEZ)
+       --------------------------------------------------------- */
     val scannedFlow = navController
         .currentBackStackEntry
         ?.savedStateHandle
@@ -51,22 +56,29 @@ fun ItemForm(
 
     LaunchedEffect(scannedFlow) {
         scannedFlow?.collect { code ->
-            Log.d("DEBUG_FORM", "ItemForm recebeu scanned_code = $code")
+            if (!code.isNullOrBlank() && code != codigo) {
 
-            if (!code.isNullOrBlank()) {
                 codigo = code
+
+                // consome o evento imediatamente
+                navController.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("scanned_code", null)
+
             }
         }
     }
 
-    // ---------------------------------------------------------
-    // DESCRIÇÃO AUTOMÁTICA
-    // ---------------------------------------------------------
+    /* ---------------------------------------------------------
+       DESCRIÇÃO AUTOMÁTICA (COM DEBOUNCE)
+       --------------------------------------------------------- */
     LaunchedEffect(codigo) {
         if (codigo.length >= 5) {
-            delay(120)
+            delay(150)
             val desc = buscarDescricao(codigo)
-            if (!desc.isNullOrBlank()) descricao = desc
+            if (!desc.isNullOrBlank()) {
+                descricao = desc
+            }
         }
     }
 
@@ -79,12 +91,14 @@ fun ItemForm(
 
                 OutlinedTextField(
                     value = codigo,
-                    onValueChange = { codigo = it },
-                    label = { Text("Código (via scanner)") },
+                    onValueChange = {
+                        codigo = it
+                        descricao = "" // força nova busca se digitar manualmente
+                    },
+                    label = { Text("Código (scanner ou manual)") },
                     trailingIcon = {
                         IconButton(onClick = {
 
-                            // limpa antes de abrir o scanner
                             navController.currentBackStackEntry
                                 ?.savedStateHandle
                                 ?.set("scanned_code", null)
@@ -101,7 +115,9 @@ fun ItemForm(
 
                 OutlinedTextField(
                     value = descricao,
-                    onValueChange = { descricao = it },
+                    onValueChange = {},
+                    readOnly = true,
+                    enabled = false,
                     label = { Text("Descrição do Produto") },
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -115,8 +131,8 @@ fun ItemForm(
 
                 OutlinedTextField(
                     value = validade,
-                    onValueChange = {},
                     readOnly = true,
+                    onValueChange = {},
                     label = { Text("Validade") },
                     trailingIcon = {
                         IconButton(onClick = {
@@ -149,13 +165,12 @@ fun ItemForm(
         confirmButton = {
             TextButton(onClick = {
                 onSalvar(
-                    codigo,
-                    descricao,
-                    quantidade, // agora String
+                    codigo.trim(),
+                    descricao.trim(),
+                    quantidade.trim(),
                     validade.ifBlank { null },
                     observacao.ifBlank { null }
                 )
-
             }) {
                 Text("Salvar")
             }

@@ -27,6 +27,7 @@ import com.manaira.supmanaira.utils.ExportUtils
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import java.util.Calendar
+import com.manaira.supmanaira.utils.ProdutoJsonUtils
 
 /* ================================================================
    TELA PRINCIPAL DOS ITENS
@@ -61,7 +62,9 @@ fun ItensScreen(
 
     LaunchedEffect(scannedCreateFlow) {
         scannedCreateFlow?.collectLatest { code ->
-            if (!code.isNullOrBlank()) abrirFormCriar = true
+            if (!code.isNullOrBlank() && !abrirFormCriar) {
+                abrirFormCriar = true
+            }
         }
     }
 
@@ -181,6 +184,11 @@ fun ItensScreen(
             registroId = registroId,
 
             onCancelar = {
+
+                navController.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.set("scanned_code", null)
+
                 abrirFormCriar = false
             },
 
@@ -203,7 +211,7 @@ fun ItensScreen(
             },
 
             buscarDescricao = { codigo ->
-                viewModel.buscarDescricaoPorCodigo(codigo)
+                ProdutoJsonUtils.buscarDescricao(context, codigo)
             }
         )
     }
