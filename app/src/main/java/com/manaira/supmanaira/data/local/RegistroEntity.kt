@@ -7,6 +7,10 @@ import androidx.room.PrimaryKey
 data class RegistroEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
+
     val nome: String,
-    val dataCriacao: Long
+    val dataCriacao: Long,
+
+    val tituloRelatorio: String // 👈 NOVO CAMPO
 )
+

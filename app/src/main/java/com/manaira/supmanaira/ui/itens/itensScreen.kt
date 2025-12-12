@@ -28,6 +28,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import java.util.Calendar
 import com.manaira.supmanaira.utils.ProdutoJsonUtils
+import com.manaira.supmanaira.ui.registros.RegistroViewModel
+import com.manaira.supmanaira.ui.registros.RegistroViewModelFactory
 
 /* ================================================================
    TELA PRINCIPAL DOS ITENS
@@ -50,7 +52,14 @@ fun ItensScreen(
     var itemParaEditar by remember { mutableStateOf<ItemEntity?>(null) }
 
     // ⚠️ TÍTULO DO RELATÓRIO
-    var tituloPlanilha by remember { mutableStateOf("") }
+    val registroViewModel: RegistroViewModel = viewModel(
+        factory = RegistroViewModelFactory(context)
+    )
+    val tituloPlanilha by registroViewModel.tituloRelatorio.collectAsState()
+
+    var tituloEditavel by remember {
+        mutableStateOf("")
+    }
 
     /* -----------------------------------------
        LISTENER — SCANNER (CRIAR)
@@ -60,11 +69,22 @@ fun ItensScreen(
             ?.savedStateHandle
             ?.getStateFlow("scanned_code", null)
 
+
+
     LaunchedEffect(scannedCreateFlow) {
         scannedCreateFlow?.collectLatest { code ->
             if (!code.isNullOrBlank() && !abrirFormCriar) {
                 abrirFormCriar = true
             }
+        }
+    }
+    LaunchedEffect(registroId) {
+        registroViewModel.carregarTitulo(registroId)
+    }
+
+    LaunchedEffect(tituloPlanilha) {
+        if (tituloEditavel.isBlank()) {
+            tituloEditavel = tituloPlanilha
         }
     }
 
@@ -100,9 +120,12 @@ fun ItensScreen(
 
             /* CAMPO — TÍTULO DA PLANILHA */
             OutlinedTextField(
-                value = tituloPlanilha,
-                onValueChange = { tituloPlanilha = it },
-                label = { Text("Título da Planilha (opcional)") },
+                value = tituloEditavel,
+                onValueChange = {
+                    tituloEditavel = it
+                    registroViewModel.atualizarTitulo(registroId, it)
+                },
+                label = { Text("Título da Planilha") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -112,11 +135,16 @@ fun ItensScreen(
             Button(
                 onClick = {
 
-                    val nomeArquivo = tituloPlanilha
+                    val nomeArquivo = tituloEditavel
                         .trim()
                         .ifBlank { "Registro_$registroId" }
+                        // troca / por .
+                        .replace("/", ".")
+                        // troca espaços por _
                         .replace("\\s+".toRegex(), "_")
-                        .replace("[^a-zA-Z0-9_]".toRegex(), "")
+                        // mantém letras, números, _ e .
+                        .replace("[^a-zA-Z0-9_.]".toRegex(), "")
+
 
                     val uri = ExportUtils.exportarExcel(
                         context = context,

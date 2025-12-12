@@ -18,4 +18,10 @@ interface RegistroDao {
 
     @Delete
     suspend fun deletar(registro: RegistroEntity)
+
+    @Query("UPDATE registros SET tituloRelatorio = :titulo WHERE id = :registroId")
+    suspend fun atualizarTitulo(registroId: Int, titulo: String)
+
+    @Query("SELECT tituloRelatorio FROM registros WHERE id = :registroId")
+    suspend fun buscarTitulo(registroId: Int): String
 }

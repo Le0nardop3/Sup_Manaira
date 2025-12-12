@@ -19,4 +19,10 @@ class RegistroRepository(
 
     suspend fun deletar(registro: RegistroEntity) =
         dao.deletar(registro)
+
+    suspend fun atualizarTitulo(registroId: Int, titulo: String) =
+        dao.atualizarTitulo(registroId, titulo)
+
+    suspend fun buscarTitulo(registroId: Int): String =
+        dao.buscarTitulo(registroId)
 }
