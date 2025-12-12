@@ -15,19 +15,27 @@ object ExportUtils {
     fun exportarExcel(
         context: Context,
         titulo: String,
-        nomeArquivo: String,
+        nomeRegistro: String, // ← nome lógico do registro
         itens: List<ItemEntity>
     ): Uri? {
         return try {
 
-            // Local do arquivo
             val downloads = Environment.getExternalStoragePublicDirectory(
                 Environment.DIRECTORY_DOWNLOADS
             )
-            val file = File(downloads, "$nomeArquivo.xlsx")
 
-            FileOutputStream(file).use { fos ->
-                val workbook = Workbook(fos, "App", "1.0")
+            // garante extensão correta e nome limpo
+            val nomeArquivo = if (nomeRegistro.endsWith(".xlsx", true)) {
+                nomeRegistro
+            } else {
+                "$nomeRegistro.xlsx"
+            }
+
+            val file = File(downloads, nomeArquivo)
+
+            // 🔥 FileOutputStream sobrescreve automaticamente
+            FileOutputStream(file, false).use { fos ->
+                val workbook = Workbook(fos, "SupManaira", "1.0")
                 val sheet = workbook.newWorksheet("Relatório")
 
                 var row = 0
@@ -37,7 +45,13 @@ object ExportUtils {
                 row += 2
 
                 // ----------------------- CABEÇALHO -----------------------
-                val headers = listOf("Código", "Nome", "Quantidade", "Validade", "Observação")
+                val headers = listOf(
+                    "Código",
+                    "Nome",
+                    "Quantidade",
+                    "Validade",
+                    "Observação"
+                )
 
                 headers.forEachIndexed { col, h ->
                     sheet.value(row, col, h)
@@ -77,6 +91,8 @@ object ExportUtils {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
 
-        context.startActivity(Intent.createChooser(intent, "Compartilhar arquivo"))
+        context.startActivity(
+            Intent.createChooser(intent, "Compartilhar arquivo")
+        )
     }
 }

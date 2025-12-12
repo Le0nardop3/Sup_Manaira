@@ -112,12 +112,16 @@ fun ItensScreen(
             Button(
                 onClick = {
 
-                    val nomeArquivo = "Registro_${registroId}"
+                    val nomeArquivo = tituloPlanilha
+                        .trim()
+                        .ifBlank { "Registro_$registroId" }
+                        .replace("\\s+".toRegex(), "_")
+                        .replace("[^a-zA-Z0-9_]".toRegex(), "")
 
                     val uri = ExportUtils.exportarExcel(
                         context = context,
-                        titulo = tituloPlanilha.ifBlank { "Registro $registroId" },
-                        nomeArquivo = nomeArquivo,
+                        titulo = nomeArquivo,
+                        nomeRegistro = nomeArquivo,
                         itens = itens.value
                     )
 
