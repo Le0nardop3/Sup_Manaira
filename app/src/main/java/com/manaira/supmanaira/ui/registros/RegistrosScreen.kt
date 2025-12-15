@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.manaira.supmanaira.navigation.AppRoute
+import com.manaira.supmanaira.ui.components.AppTopBar
 
 @Composable
 fun RegistrosScreen(navController: NavHostController, context: Context = navController.context) {
@@ -31,6 +32,11 @@ fun RegistrosScreen(navController: NavHostController, context: Context = navCont
     var abrirDialogEditar by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
+        topBar = {
+            AppTopBar(
+                title = "Registros"
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = { abrirDialogCriar = true }) {
                 Icon(Icons.Default.Add, contentDescription = "Adicionar")
@@ -44,12 +50,8 @@ fun RegistrosScreen(navController: NavHostController, context: Context = navCont
                 .fillMaxSize()
         ) {
 
-            Text(
-                text = "Registros",
-                style = MaterialTheme.typography.headlineMedium
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
+            // ❌ REMOVIDO:
+            // Text("Registros")
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -58,37 +60,49 @@ fun RegistrosScreen(navController: NavHostController, context: Context = navCont
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         onClick = {
-                            navController.navigate(AppRoute.Itens.createRoute(registro.id))
+                            navController.navigate(
+                                AppRoute.Itens.createRoute(registro.id)
+                            )
                         }
                     ) {
                         Row(
-                            modifier = Modifier
-                                .padding(16.dp),
+                            modifier = Modifier.padding(16.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(text = registro.nome, style = MaterialTheme.typography.titleMedium)
+                                Text(
+                                    text = registro.nome,
+                                    style = MaterialTheme.typography.titleMedium
+                                )
                                 Text(
                                     text = "ID: ${registro.id}",
                                     style = MaterialTheme.typography.bodySmall
                                 )
                             }
 
-                            IconButton(onClick = { abrirDialogEditar = registro.id }) {
+                            IconButton(onClick = {
+                                abrirDialogEditar = registro.id
+                            }) {
                                 Icon(Icons.Default.Edit, contentDescription = "Editar")
                             }
 
-                            IconButton(onClick = { viewModel.deletarRegistro(registro.id) }) {
+                            IconButton(onClick = {
+                                viewModel.deletarRegistro(registro.id)
+                            }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Excluir")
                             }
 
-                            Icon(Icons.Default.KeyboardArrowRight, contentDescription = "")
+                            Icon(
+                                Icons.Default.KeyboardArrowRight,
+                                contentDescription = null
+                            )
                         }
                     }
                 }
             }
         }
     }
+
 
     if (abrirDialogCriar) {
         DialogCriarRegistro(

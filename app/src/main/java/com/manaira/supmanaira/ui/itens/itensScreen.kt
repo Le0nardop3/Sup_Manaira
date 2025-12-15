@@ -1,5 +1,5 @@
 package com.manaira.supmanaira.ui.itens
-
+import androidx.compose.foundation.background
 import android.util.Log
 import android.app.DatePickerDialog
 import android.content.Context
@@ -30,6 +30,7 @@ import java.util.Calendar
 import com.manaira.supmanaira.utils.ProdutoJsonUtils
 import com.manaira.supmanaira.ui.registros.RegistroViewModel
 import com.manaira.supmanaira.ui.registros.RegistroViewModelFactory
+import com.manaira.supmanaira.ui.components.AppTopBar
 
 /* ================================================================
    TELA PRINCIPAL DOS ITENS
@@ -114,6 +115,8 @@ fun ItensScreen(
 
         Column(
             modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
                 .padding(16.dp)
         ) {
