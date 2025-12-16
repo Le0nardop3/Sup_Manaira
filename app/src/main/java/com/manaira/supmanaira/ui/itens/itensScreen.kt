@@ -1,6 +1,5 @@
 package com.manaira.supmanaira.ui.itens
 import androidx.compose.foundation.background
-import android.util.Log
 import android.app.DatePickerDialog
 import android.content.Context
 import androidx.compose.foundation.layout.*
@@ -30,7 +29,7 @@ import java.util.Calendar
 import com.manaira.supmanaira.utils.ProdutoJsonUtils
 import com.manaira.supmanaira.ui.registros.RegistroViewModel
 import com.manaira.supmanaira.ui.registros.RegistroViewModelFactory
-import com.manaira.supmanaira.ui.components.AppTopBar
+import com.manaira.supmanaira.utils.PdfExportUtils
 
 /* ================================================================
    TELA PRINCIPAL DOS ITENS
@@ -51,6 +50,7 @@ fun ItensScreen(
 
     var abrirFormCriar by remember { mutableStateOf(false) }
     var itemParaEditar by remember { mutableStateOf<ItemEntity?>(null) }
+    var mostrarDialogExportar by remember { mutableStateOf(false) }
 
     // ⚠️ TÍTULO DO RELATÓRIO
     val registroViewModel: RegistroViewModel = viewModel(
@@ -137,29 +137,7 @@ fun ItensScreen(
             /* BOTÃO — EXPORTAR */
             Button(
                 onClick = {
-
-                    val nomeArquivo = tituloEditavel
-                        .trim()
-                        .ifBlank { "Registro_$registroId" }
-                        // troca / por .
-                        .replace("/", ".")
-                        // troca espaços por _
-                        .replace("\\s+".toRegex(), "_")
-                        // mantém letras, números, _ e .
-                        .replace("[^a-zA-Z0-9_.]".toRegex(), "")
-
-
-                    val uri = ExportUtils.exportarExcel(
-                        context = context,
-                        titulo = nomeArquivo,
-                        nomeRegistro = nomeArquivo,
-                        itens = itens.value
-                    )
-
-                    if (uri != null) {
-                        ExportUtils.compartilharArquivo(context, uri)
-                    }
-
+                    mostrarDialogExportar = true
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -208,6 +186,94 @@ fun ItensScreen(
             }
         }
     }
+
+    if (mostrarDialogExportar) {
+
+        val nomeArquivo = tituloEditavel
+            .trim()
+            .ifBlank { "Registro_$registroId" }
+            .replace("/", ".")
+            .replace("\\s+".toRegex(), "_")
+            .replace("[^a-zA-Z0-9_.]".toRegex(), "")
+
+        AlertDialog(
+            onDismissRequest = { mostrarDialogExportar = false },
+            title = {
+                Text(
+                    text = "Exportar relatório",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            },
+            text = {
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+
+                    Text(
+                        text = "Escolha o formato do arquivo",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+
+                    // ===== BOTÃO EXCEL =====
+                    Button(
+                        onClick = {
+
+                            val uri = ExportUtils.exportarExcel(
+                                context = context,
+                                titulo = nomeArquivo,
+                                nomeRegistro = nomeArquivo,
+                                itens = itens.value
+                            )
+
+                            uri?.let {
+                                ExportUtils.compartilharArquivo(context, it)
+                            }
+
+                            mostrarDialogExportar = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Exportar em Excel (XLSX)")
+                    }
+
+                    // ===== BOTÃO PDF =====
+                    Button(
+                        onClick = {
+
+                            val uri = PdfExportUtils.exportarPdf(
+                                context = context,
+                                titulo = nomeArquivo,
+                                nomeArquivo = nomeArquivo,
+                                itens = itens.value
+                            )
+
+                            uri?.let {
+                                PdfExportUtils.compartilharPdf(context, it)
+                            }
+
+                            mostrarDialogExportar = false
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Exportar em PDF")
+                    }
+
+                    // ===== CANCELAR =====
+                    TextButton(
+                        onClick = { mostrarDialogExportar = false },
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {}
+        )
+    }
+
 
     /* ============================================================
        FORMULÁRIO DE CRIAÇÃO

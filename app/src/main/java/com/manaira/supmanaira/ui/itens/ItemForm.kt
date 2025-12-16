@@ -73,8 +73,8 @@ fun ItemForm(
        DESCRIÇÃO AUTOMÁTICA (COM DEBOUNCE)
        --------------------------------------------------------- */
     LaunchedEffect(codigo) {
-        if (codigo.length >= 5) {
-            delay(150)
+        if (codigo.length >= 1) {
+            delay(700)
             val desc = buscarDescricao(codigo)
             if (!desc.isNullOrBlank()) {
                 descricao = desc
