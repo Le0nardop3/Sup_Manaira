@@ -49,7 +49,16 @@ fun RegistrosScreen(navController: NavHostController, context: Context = navCont
                 .padding(16.dp)
                 .fillMaxSize()
         ) {
-
+            Button(
+                onClick = {
+                    navController.navigate(AppRoute.Validades.route)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp)
+            ) {
+                Text("Controle de Validades")
+            }
             // ❌ REMOVIDO:
             // Text("Registros")
 

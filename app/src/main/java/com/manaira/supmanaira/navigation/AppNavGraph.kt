@@ -8,10 +8,12 @@ import com.manaira.supmanaira.ui.home.HomeScreen
 import com.manaira.supmanaira.ui.registros.RegistrosScreen
 import com.manaira.supmanaira.ui.itens.ItensScreen
 import com.manaira.supmanaira.ui.scanner.ScannerScreen
+import com.manaira.supmanaira.ui.validades.ValidadesScreen
 
 sealed class AppRoute(val route: String) {
     object Home : AppRoute("home")
     object Registros : AppRoute("registros")
+    object Validades : AppRoute("validades")
     object Itens : AppRoute("itens/{registroId}") {
         fun createRoute(id: Int) = "itens/$id"
     }
@@ -40,5 +42,9 @@ fun AppNavGraph(navController: NavHostController) {
             val registroId = backStack.arguments?.getString("registroId")?.toInt() ?: 0
             ScannerScreen(navController, registroId)
         }
+        composable(AppRoute.Validades.route) {
+            ValidadesScreen(navController)
+        }
+
     }
 }
