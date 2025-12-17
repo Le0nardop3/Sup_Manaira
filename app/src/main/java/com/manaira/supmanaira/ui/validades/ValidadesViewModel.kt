@@ -13,42 +13,53 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.flow.combine
 
 data class ItemValidadeUI(
     val item: ItemEntity,
-    val diasParaVencer: Long
+    val diasParaVencer: Long,
+    val nomeRegistro: String
 )
+
 
 class ValidadesViewModel(context: Context) : ViewModel() {
 
-    private val dao = DatabaseProvider.getDatabase(context).itemDao()
+    private val db = DatabaseProvider.getDatabase(context)
+    private val itemDao = db.itemDao()
+    private val registroDao = db.registroDao()
 
     private val dateFormat =
         SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
 
     val itensOrdenados: StateFlow<List<ItemValidadeUI>> =
-        dao.getTodosItensComValidade()
-            .map { lista ->
-                lista.mapNotNull { item ->
-                    val dias = diasParaVencer(item.validade)
-                        ?: return@mapNotNull null
+        combine(
+            itemDao.getTodosItensComValidade(),
+            registroDao.getRegistros()
+        ) { itens, registros ->
 
-                    ItemValidadeUI(
-                        item = item,
-                        diasParaVencer = dias
-                    )
-                }.sortedBy { it.diasParaVencer }
-            }
+            val mapaRegistros = registros.associateBy { it.id }
+
+            itens.mapNotNull { item ->
+                val dias = diasParaVencer(item.validade) ?: return@mapNotNull null
+                val nomeRegistro =
+                    mapaRegistros[item.registroId]?.nome ?: "Registro desconhecido"
+
+                ItemValidadeUI(
+                    item = item,
+                    diasParaVencer = dias,
+                    nomeRegistro = nomeRegistro
+                )
+            }.sortedBy { it.diasParaVencer }
+        }
             .stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
                 emptyList()
             )
 
-    // 🔴 FUNÇÃO NOVA — usada pelo botão de lixeira
     fun deletarItem(item: ItemEntity) {
         viewModelScope.launch {
-            dao.deletar(item)
+            itemDao.deletar(item)
         }
     }
 
@@ -64,3 +75,4 @@ class ValidadesViewModel(context: Context) : ViewModel() {
         }
     }
 }
+

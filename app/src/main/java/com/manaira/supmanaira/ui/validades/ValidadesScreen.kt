@@ -49,6 +49,7 @@ fun ValidadesScreen(
 
             items(itens) { ui ->
 
+                // 🎨 FUNDO SUAVE
                 val backgroundColor = when {
                     ui.diasParaVencer < 0 -> Color(0xFFFFE0E0)
                     ui.diasParaVencer < 30 -> Color(0xFFFFEBEE)
@@ -62,6 +63,7 @@ fun ValidadesScreen(
                     ),
                     modifier = Modifier.fillMaxWidth()
                 ) {
+
                     Row(
                         modifier = Modifier
                             .padding(16.dp)
@@ -69,11 +71,12 @@ fun ValidadesScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
-                        // 📄 CONTEÚDO
+                        // 📄 CONTEÚDO PRINCIPAL
                         Column(
                             modifier = Modifier.weight(1f)
                         ) {
 
+                            // 🔹 PRODUTO
                             Text(
                                 text = ui.item.nome,
                                 style = MaterialTheme.typography.titleMedium,
@@ -81,8 +84,28 @@ fun ValidadesScreen(
                                 color = Color.Black
                             )
 
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(4.dp))
 
+                            // 🔹 REGISTRO
+                            Text(
+                                text = "Registro: ${ui.nomeRegistro}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.DarkGray
+                            )
+
+                            Spacer(Modifier.height(4.dp))
+
+                            // 🔹 QUANTIDADE
+                            Text(
+                                text = "Quantidade: ${ui.item.quantidade}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                                color = Color.Black
+                            )
+
+                            Spacer(Modifier.height(6.dp))
+
+                            // 🔹 VALIDADE
                             Text(
                                 text = "Validade: ${ui.item.validade}",
                                 style = MaterialTheme.typography.bodyMedium,
@@ -91,6 +114,7 @@ fun ValidadesScreen(
 
                             Spacer(Modifier.height(4.dp))
 
+                            // 🔹 DIAS PARA VENCER (DESTAQUE)
                             Text(
                                 text = "Dias para vencer: ${ui.diasParaVencer}",
                                 style = MaterialTheme.typography.bodyLarge,
@@ -103,6 +127,7 @@ fun ValidadesScreen(
                                 }
                             )
 
+                            // 🔥 ALERTA
                             if (ui.diasParaVencer < 0) {
                                 Spacer(Modifier.height(6.dp))
                                 Text(
