@@ -18,6 +18,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.manaira.supmanaira.navigation.AppRoute
 import com.manaira.supmanaira.ui.components.AppTopBar
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun RegistrosScreen(navController: NavHostController, context: Context = navController.context) {
@@ -30,6 +31,7 @@ fun RegistrosScreen(navController: NavHostController, context: Context = navCont
 
     var abrirDialogCriar by remember { mutableStateOf(false) }
     var abrirDialogEditar by remember { mutableStateOf<Int?>(null) }
+    var registroParaExcluir by remember { mutableStateOf<Int?>(null) }
 
     Scaffold(
         topBar = {
@@ -96,7 +98,7 @@ fun RegistrosScreen(navController: NavHostController, context: Context = navCont
                             }
 
                             IconButton(onClick = {
-                                viewModel.deletarRegistro(registro.id)
+                                registroParaExcluir = registro.id
                             }) {
                                 Icon(Icons.Default.Delete, contentDescription = "Excluir")
                             }
@@ -119,6 +121,37 @@ fun RegistrosScreen(navController: NavHostController, context: Context = navCont
             onConfirmar = { nome ->
                 viewModel.criarRegistro(nome)
                 abrirDialogCriar = false
+            }
+        )
+    }
+    registroParaExcluir?.let { registroId ->
+
+        AlertDialog(
+            onDismissRequest = { registroParaExcluir = null },
+            title = { Text("Excluir registro") },
+            text = {
+                Text(
+                    "Este registro será excluído permanentemente.\n\n" +
+                            "⚠️ Todos os itens e validades dentro dele também serão apagados.\n\n" +
+                            "Deseja continuar?"
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deletarRegistro(registroId)
+                        registroParaExcluir = null
+                    }
+                ) {
+                    Text("Excluir tudo", color = Color(0xFFD32F2F))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { registroParaExcluir = null }
+                ) {
+                    Text("Cancelar")
+                }
             }
         )
     }
